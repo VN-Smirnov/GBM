@@ -1,0 +1,12 @@
+#ifndef CREDINTAILS_H
+#define CREDINTAILS_H
+
+#define WIFI_SSID         CHANGE_ME
+#define WIFI_PASSWORD     CHANGE_ME
+
+#define MQTT_USER         CHANGE_ME
+#define MQTT_PASSWORD     CHANGE_ME
+#define MQTT_BROCKER_ADDR CHANGE_ME
+#define MQTT_PORT_ADDR    CHANGE_ME
+
+#endif
