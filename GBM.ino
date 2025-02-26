@@ -182,7 +182,7 @@ void pollDHTValues(void) {
 }
 
 void showValuesOnLCD(const MonitorParms_t* values){
-
+  
 }
 
 void showValuesOnConsole(const MonitorParms_t* values){
