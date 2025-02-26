@@ -68,7 +68,7 @@ MonitorParms_t GBMParms = {
 /*------=End Global variables=------*/
 
 /*------=Begin Obj Init=------*/
-#if ENABLE_LCD == 1
+#if (ENABLE_LCD == 1)
   LiquidCrystal_I2C mainLCD(LCD_ADDRESS, LCD_COLLUMS, LCD_LINES);
 #endif
 
@@ -182,7 +182,50 @@ void pollDHTValues(void) {
 }
 
 void showValuesOnLCD(const MonitorParms_t* values){
+  //print on LCD Time and Date
+  mainLCD.setCursor(0, 0);
+  mainLCD.print(values->amazingTimeDate.Date);
+  mainLCD.print(" ");
+  mainLCD.print(values->amazingTimeDate.Time);
+
+  //print on LCD Coolant Temperatures
+  //input Temperature
+  mainLCD.setCursor(0, 1);
+  mainLCD.print("Ti:");
+  mainLCD.setCursor(0, 4);
+  mainLCD.print(values->inCoolantTemperature.sValue);
+  mainLCD.write(223);               
+  mainLCD.print(" ");
+
+  //output Temperature
+  mainLCD.setCursor(10, 1);
+  mainLCD.print("To:");
+  mainLCD.setCursor(14, 1);
+  mainLCD.print(values->outCoolantTemperature.sValue);
+  mainLCD.write(223);
   
+  //print DHT11 Temperature and Humidity
+  //Temperature
+  mainLCD.setCursor(0,2);
+  mainLCD.print("Tg");
+  mainLCD.setCursor(4,2);
+  mainLCD.print(values->internalTemperature.sValue);
+  mainLCD.write(223);
+
+  //Humidity
+  mainLCD.setCursor(10, 2);
+  mainLCD.print("Hi:");
+  mainLCD.setCursor(14, 2);
+  mainLCD.print(values->internalHumidity.sValue);
+  mainLCD.print("% ");
+
+  //Print on LCD Coolant Pressure
+  mainLCD.setCursor(0, 3);
+  mainLCD.print("Pressure:");
+  mainLCD.setCursor(10, 3);
+  mainLCD.print(values->coolantPressure.sValue);
+  mainLCD.print(" Bar ");
+
 }
 
 void showValuesOnConsole(const MonitorParms_t* values){

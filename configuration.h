@@ -4,7 +4,7 @@
 /*---=Begin Debug config=---*/
 #define         DEBUG         1                   //0 - releas,       1 - debug
 #define         FAKE_SENSORS  1                   //0 - real sensors, 1 - fake sensors
-#define         ENABLE_LCD    0                   //0 - without LCD,  1 - LCD enabled     
+#define         ENABLE_LCD    1                   //0 - without LCD,  1 - LCD enabled     
 /*---=End Debug config=---*/
 
 /*---=Begin pin number config=---*/
