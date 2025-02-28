@@ -16,12 +16,20 @@
 #define   MQTT_CH_BUFF_SIZE 32
 #define   MQTT_CONNECT_ATTEMPT    5
 
-/* -----= Begin Structures =-----*/
+/* -----= Begin Types and Structures =-----*/
+typedef enum {
+  connected,
+  disconnected,
+  connecting,
+} connectionStatus_t;
+
 typedef struct {
   float fValue;
   char sValue[CH_BUFF_SIZE];
   char mqttBrokerTopic[MQTT_CH_BUFF_SIZE];
 } mqttMonitoringParameter_t;
+
+
 
 typedef struct {
   int unixTime;
@@ -32,14 +40,16 @@ typedef struct {
 
 
 typedef struct {
-  amazingTimeDate_t amazingTimeDate;
+  connectionStatus_t        mqttStatus;
+  connectionStatus_t        wifiStatus;
+  amazingTimeDate_t         amazingTimeDate;
   mqttMonitoringParameter_t inCoolantTemperature;
   mqttMonitoringParameter_t outCoolantTemperature;
   mqttMonitoringParameter_t internalTemperature;
   mqttMonitoringParameter_t internalHumidity;
   mqttMonitoringParameter_t coolantPressure;
 } MonitorParms_t; 
-/* -----= End Structures =-----*/
+/* -----= End Types and Structures =-----*/
 
 /*------=Begin functions prototypes=------*/
 void  pollDateTime(void);
@@ -59,6 +69,8 @@ uint32_t  currentTimeMQTTSend   = 0;
 float     pressure = 71.0;
 
 MonitorParms_t GBMParms = {
+                          .mqttStatus = disconnected,
+                          .wifiStatus = disconnected,
                           .amazingTimeDate = {.unixTime = 12, .Time = "InitTime", .Date = "InitDate", .mqttBrokerTopic = "Garage/Time"},
                           .inCoolantTemperature = { .fValue = -127, .sValue = "-127",  .mqttBrokerTopic = "Garage/inCoolantTemperature"},
                           .outCoolantTemperature = { .fValue = -127, .sValue = "-127", .mqttBrokerTopic = "Garage/outCoolantTemperature"},
@@ -290,18 +302,20 @@ void initWifi(void) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
-    #if(DEBUG == 1)
+   
     
       while (WiFi.status() != WL_CONNECTED) 
       {
         delay(500);
-        Serial.print(".");
+         #if (DEBUG == 1)
+          Serial.print(".");
+        #endif
       }
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
+    #if (DEBUG == 1)
+      Serial.println("");
+      Serial.println("WiFi connected");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
     #endif
 }
 
