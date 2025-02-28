@@ -14,6 +14,7 @@
 
 #define   CH_BUFF_SIZE      6     //Size of buffer for converting  from float to string values
 #define   MQTT_CH_BUFF_SIZE 32
+#define   MQTT_CONNECT_ATTEMPT    5
 
 /* -----= Begin Structures =-----*/
 typedef struct {
@@ -106,14 +107,13 @@ void setup() {
   
   initWifi();
 
+  reconnectToMQTTBrocker();
+  
+
 }
 
 void loop() {
-  if (!GBMMQTTClient.connected()) 
-    {
-      reconnectToMQTTBrocker();
-    }
-  
+    
   if(millis()-currentTimeTicks > POLLING_SENSOR_TIME_INTERVAL) {
     currentTimeTicks = millis();
     
@@ -306,22 +306,30 @@ void initWifi(void) {
 }
 
 void reconnectToMQTTBrocker() {
-  // Loop until we're reconnected
-  while (!GBMMQTTClient.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (GBMMQTTClient.connect(MQTT_NAME_CLIENT, MQTT_USER, MQTT_PASSWORD)) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      GBMMQTTClient.publish("temp/message","hello world");
-      // ... and resubscribe
-      
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(GBMMQTTClient.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
+  uint8_t attemptMqttConnectCounter = 0;
+  do {
+      #if (DEBUG == 1)
+      Serial.print("Attempting MQTT connection...");
+      #endif
+
+      // Attempt to connect
+      if (GBMMQTTClient.connect(MQTT_NAME_CLIENT, MQTT_USER, MQTT_PASSWORD)) {
+        #if (DEBUG == 1)
+          Serial.println("connected");
+        #endif
+        //Once connected, publish an announcement...
+        GBMMQTTClient.publish("temp/message","hello world");
+        break;
+        // ... and resubscribe
+        
+      } else {
+        #if (DEBUG == 1)
+          Serial.print("failed, rc=");
+          Serial.print(GBMMQTTClient.state());
+          Serial.println(" try again in 3 seconds");
+        #endif
+        // Wait 3 seconds before retrying
+        delay(3000);
+      }
+    }   while(attemptMqttConnectCounter < MQTT_CONNECT_ATTEMPT);
 }
