@@ -12,9 +12,10 @@
 #include "credintails.h"   //Password for wi-fi and mqtt broker and brocker IP address
 #include "configuration.h" //Values and Calib Const for sensors and etc.
 
-#define   CH_BUFF_SIZE      6     //Size of buffer for converting  from float to string values
-#define   MQTT_CH_BUFF_SIZE 32
+#define   CH_BUFF_SIZE            6     //Size of buffer for converting  from float to string values
+#define   MQTT_CH_BUFF_SIZE       32
 #define   MQTT_CONNECT_ATTEMPT    5
+#define   PRESSURE_CONST          71.0
 
 /* -----= Begin Types and Structures =-----*/
 typedef enum {
@@ -29,15 +30,12 @@ typedef struct {
   char mqttBrokerTopic[MQTT_CH_BUFF_SIZE];
 } mqttMonitoringParameter_t;
 
-
-
 typedef struct {
   int unixTime;
   String Time;  
   String Date;
   String mqttBrokerTopic;
 } amazingTimeDate_t;
-
 
 typedef struct {
   connectionStatus_t        mqttStatus;
@@ -66,7 +64,6 @@ void  reconnectToMQTTBrocker(void);
 /*------=Begin Global variables=------*/
 uint32_t  currentTimeTicks      = 0;
 uint32_t  currentTimeMQTTSend   = 0;
-float     pressure = 71.0;
 
 MonitorParms_t GBMParms = {
                           .mqttStatus = disconnected,
@@ -101,7 +98,6 @@ const char* mqttServer = MQTT_BROCKER_ADDR;
 
 WiFiClient GBMWiFiClient;
 PubSubClient GBMMQTTClient(mqttServer, MQTT_PORT_ADDR, GBMWiFiClient);
-
 /*------=End Obj Init=------*/
 
 void setup() {
@@ -115,13 +111,14 @@ void setup() {
     mainLCD.backlight();
   #endif
   
+  analogReadResolution(10);
+
   pinMode(PRESS_SENS_PIN,  INPUT_PULLUP);
   
   initWifi();
 
   reconnectToMQTTBrocker();
   
-
 }
 
 void loop() {
@@ -153,8 +150,10 @@ void loop() {
 }
 
 void pollDateTime(void){
-  #if(FAKE_SENSORS == 0)
-
+  #if(DS3231_FAKE_SENSORS == 0)
+    GBMParms.amazingTimeDate.unixTime = amazingClock.getUnix(TIME_ZONE);
+    GBMParms.amazingTimeDate.Time = amazingClock.getTimeString();
+    GBMParms.amazingTimeDate.Date = amazingClock.getDateString();
   #else
     GBMParms.amazingTimeDate.unixTime = 1458;
     GBMParms.amazingTimeDate.Time = "12:45";
@@ -163,34 +162,44 @@ void pollDateTime(void){
 }
 
 void pollDS18B20Temperatures(void){
-  #if(FAKE_SENSORS == 0)
-
+  #if(DS18B20_FAKE_SENSORS == 0)
+    DS18B20Sens.requestTemperatures();
+    delay(100);
+    GBMParms.inCoolantTemperature.fValue = DS18B20Sens.getTempC(addresDS18B20SensRed);          //
+    GBMParms.inCoolantTemperature.fValue = DS18B20Sens.getTempC(addresDS18B20SensBlack);        //
   #else
     GBMParms.inCoolantTemperature.fValue = static_cast<float>(random(0, 70));
-    snprintf(GBMParms.inCoolantTemperature.sValue, sizeof(GBMParms.inCoolantTemperature.sValue), "%.1f", GBMParms.inCoolantTemperature.fValue);
     GBMParms.outCoolantTemperature.fValue = static_cast<float>(random(0, 50));
-    snprintf(GBMParms.outCoolantTemperature.sValue, sizeof(GBMParms.outCoolantTemperature.sValue), "%.1f", GBMParms.outCoolantTemperature.fValue);
   #endif
+  
+  snprintf(GBMParms.inCoolantTemperature.sValue, sizeof(GBMParms.inCoolantTemperature.sValue), "%.1f", GBMParms.inCoolantTemperature.fValue);
+  snprintf(GBMParms.outCoolantTemperature.sValue, sizeof(GBMParms.outCoolantTemperature.sValue), "%.1f", GBMParms.outCoolantTemperature.fValue);
 }
 
 void pollPressures(void){
-  #if(FAKE_SENSORS == 0)
-
+  #if(PRESSURE_FAKE_SENSORS == 0)
+    uint16_t  pressure;
+    pressure = constain(analogRead(PRESS_SENS_PIN), MIN_PRESSURE_VALUE, MAX_PRESSURE_VALUE);
+    GBMParms.coolantPressure.fValue = (pressure-MIN_PRESSURE_VALUE)/PRESSURE_CONST;
   #else
     GBMParms.coolantPressure.fValue = static_cast<float>(random(0, 20)/10);
-    snprintf(GBMParms.coolantPressure.sValue, sizeof(GBMParms.coolantPressure.sValue), "%.1f", GBMParms.coolantPressure.fValue);
   #endif
+  
+  snprintf(GBMParms.coolantPressure.sValue, sizeof(GBMParms.coolantPressure.sValue), "%.1f", GBMParms.coolantPressure.fValue);
 }
 
 void pollDHTValues(void) {
-  #if(FAKE_SENSORS == 0)
-
+  #if(DHT11_FAKE_SENSORS == 0)
+    mainDHT.read11(DHT11_PIN);
+    delay(100);
+    GBMParms.internalTemperature.fValue = mainDHT.getTemperature()-DHT11_TEMPERATURE_CORRECTION;
+    GBMParms.internalHumidity.fValue = mainDHT.getHumidity();
   #else
     GBMParms.internalTemperature.fValue = static_cast<float>(random(-15, 60));
-    snprintf(GBMParms.internalTemperature.sValue, sizeof(GBMParms.internalTemperature.sValue), "%.1f", GBMParms.internalTemperature.fValue);
     GBMParms.internalHumidity.fValue = static_cast<float>(random(0, 101));
-    snprintf(GBMParms.internalHumidity.sValue, sizeof(GBMParms.internalHumidity.sValue), "%.1f", GBMParms.internalHumidity.fValue);
   #endif
+  snprintf(GBMParms.internalTemperature.sValue, sizeof(GBMParms.internalTemperature.sValue), "%.1f", GBMParms.internalTemperature.fValue);
+  snprintf(GBMParms.internalHumidity.sValue, sizeof(GBMParms.internalHumidity.sValue), "%.1f", GBMParms.internalHumidity.fValue);
 }
 
 void showValuesOnLCD(const MonitorParms_t* values){

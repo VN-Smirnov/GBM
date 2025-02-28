@@ -2,14 +2,17 @@
 #define CONFIGURATION_H
 
 /*---=Begin Debug config=---*/
-#define         DEBUG         1                   //0 - releas,       1 - debug
-#define         FAKE_SENSORS  1                   //0 - real sensors, 1 - fake sensors
-#define         ENABLE_LCD    1                   //0 - without LCD,  1 - LCD enabled     
+#define         DEBUG                 1                   //0 - releas,       1 - debug
+#define         ENABLE_LCD            1                   //0 - without LCD,  1 - LCD enabled
+#define         DS3231_FAKE_SENSORS   1                   //0 - real sensors, 1 - fake sensors
+#define         DS18B20_FAKE_SENSORS  1                   //0 - real sensors, 1 - fake sensors
+#define         DHT11_FAKE_SENSORS    1                   //0 - real sensors, 1 - fake sensors
+#define         PRESSURE_FAKE_SENSORS 1                   //0 - real sensors, 1 - fake sensors
 /*---=End Debug config=---*/
 
 /*---=Begin pin number config=---*/
 #define     OWP_PIN                       4       //OneWire pin for DS18B20 sensors
-#define     PRESS_SENS_PIN                15      //ADC pin for Pressure Sensor
+#define     PRESS_SENS_PIN                15      //ADC pin for Pressure Sensor, replace GPIO32 - GPIO39
 #define     DHT11_PIN                     18      //DHT11 Sensor Pin
 /*---=End pin number config=---*/
 
@@ -20,6 +23,7 @@
 #define     DHT11_TEMPERATURE_CORRECTION  0.8     //Correction for Temperature
 #define     MIN_PRESSURE_VALUE            108     //Min Press Value, for sensor calibration  
 #define     MAX_PRESSURE_VALUE            1023    //Max Press Value, for sensor calibration  
+#define     TIME_ZONE                     5      //Time Zone +5 by default
 
 /*---=End valeus and koef param=---*/
 
